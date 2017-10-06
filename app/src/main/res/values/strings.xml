@@ -10,6 +10,6 @@
     <string name="hello_photo_fragment">Hello photo fragment</string>
     <string name="hello_explore_fragment">Hello explore fragment</string>
     <string name="title_activity_photo">PhotoActivity</string>
-    <string name="button_camera">Camera</string>
-    <string name="button_">Gallery</string>
+    <string name="button_photo_yes">Yes</string>
+    <string name="button_photo_no">No</string>
 </resources>

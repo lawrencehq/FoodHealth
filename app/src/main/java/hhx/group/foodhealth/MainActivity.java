@@ -1,56 +1,57 @@
 package hhx.group.foodhealth;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Process;
 import android.os.StrictMode;
-import android.provider.MediaStore;
-import android.provider.Settings;
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.app.Fragment;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
+import com.google.gson.Gson;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+/**
+ * Created by Enthalqy Huang on 2017/10/1.
+ * MainActivity, display the records and total cal the user have taken today
+ */
 
 public class MainActivity extends AppCompatActivity {
 
-    // fragments
-    private HomeFragment homeFragment;
-    private PhotoFragment photoFragment;
-    private ExploreFragment exploreFragment;
-    // record the last clicked item
-    private MenuItem lastItem;
     private Context mContext;
-    // image file
-    private File imageFile;
-    private String filePath;
-
-    public static final int REQUEST_CAMERA = 0;
-    public static final int REQUEST_CROP = 1;
-    public static final int REQUEST_WRITE = 2;
-    public static final String IMAGE_UNSPECIFIED = "image/*";
+    // address of the server
+    private String baseUrl = "http://52.255.60.10/index.php/";
+    private final OkHttpClient httpClient = new OkHttpClient();
+    // textView to display statistic info
+    private TextView cal;
+    // listView for records
+    private ListView listView;
+    private SimpleAdapter adapter;
+    private List<HashMap<String, String>> recordData = new ArrayList<>();
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -60,39 +61,19 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
                     Log.d("Debug", "click home");
-                    if (lastItem.getItemId() == item.getItemId()) {
-                        Log.d("Debug", "refresh home");
-                        Toast.makeText(mContext, "refresh the home page", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.d("Debug", "change to home");
-                        lastItem = item;
-                        changeFragment(homeFragment);
-                    }
+                    Log.d("Debug", "refresh home");
+                    makeToast("refresh the home page");
+                    display();
                     return true;
                 case R.id.navigation_camera:
                     Log.d("Debug", "click camera");
-                    changeFragment(photoFragment);
-                    showCamera();
-
-//                    if (lastItem.getItemId() == item.getItemId()) {
-//                        Log.d("Debug", "refresh camera");
-//                        Toast.makeText(mContext, "refresh the photo page", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        Log.d("Debug", "change to photo");
-//                        lastItem = item;
-//                        changeFragment(photoFragment);
-//                    }
+                    Intent intent = new Intent();
+                    intent.setClass(MainActivity.this, PhotoActivity.class);
+                    startActivity(intent);
                     return true;
                 case R.id.navigation_explore:
                     Log.d("Debug", "click explore");
-                    if (lastItem.getItemId() == item.getItemId()) {
-                        Log.d("Debug", "refresh explore");
-                        Toast.makeText(mContext, "refresh the explore page", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.d("Debug", "change to explore");
-                        lastItem = item;
-                        changeFragment(exploreFragment);
-                    }
+
                     return true;
             }
             return false;
@@ -106,9 +87,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d("Debug", "MainActivity onCreate");
         // hide title
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        // set full screen
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
         mContext = this;
 
@@ -118,110 +96,174 @@ public class MainActivity extends AppCompatActivity {
         }
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
-        lastItem = navigation.getMenu().getItem(0);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        //initial fragments
-        initialFragments();
-        // set default fragment to home fragment
-        changeFragment(homeFragment);
+        cal = (TextView) findViewById(R.id.textView);
+        // initial listView, set adapter
+        listView = (ListView) findViewById(R.id.listView);
+        adapter = new SimpleAdapter(this, recordData, R.layout.list_item,
+                new String[] {"name", "protein", "fat", "carbo", "fiber", "energy", "quan"},
+                new int[] {R.id.text1, R.id.text2, R.id.text3, R.id.text4, R.id.text5, R.id.text6, R.id.text7});
+        listView.setAdapter(adapter);
+
+        // display user info
+        display();
     }
 
-    // initial fragments
-    private void initialFragments() {
-        homeFragment = HomeFragment.newInstance("", "");
-        photoFragment = PhotoFragment.newInstance("", "");
-        exploreFragment = ExploreFragment.newInstance("", "");
-    }
-
-    // change to target fragment
-    private void changeFragment(Fragment fragment) {
-        getFragmentManager().beginTransaction().replace(R.id.content, fragment)
-                .attach(fragment).setTransitionStyle(FragmentTransaction.TRANSIT_FRAGMENT_FADE).commit();
-    }
-
-    private void showCamera() {
-        Log.d("Debug", "Call show camera, check permission");
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            // permission not granted, request for permission
-            Log.d("Debug", "Permission nor granted, request for permission");
-            requestCameraPermission();
-            startCamera();
+    private void display() {
+        // get SharedPreferences
+        SharedPreferences sharedPref = getSharedPreferences("storage", Context.MODE_PRIVATE);
+        int uid = sharedPref.getInt("uid", 0);
+        // if uid exists, refresh the view, else create user
+        if (uid == 0) {
+            new MyRequestRegister().execute();
         } else {
-            Log.d("Debug", "Permission already granted");
-            startCamera();
+            new MyRequestGetRecord().execute();
         }
     }
 
-    /**
-     * Requests the Camera permission
-     *
-     */
-    private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
-    }
+    // register user
+    private int register(String username) throws IOException, JSONException {
+        Request request = new Request.Builder().url(baseUrl + "addUser/"+username+"/1/175/75").build();
+        Log.d("Debug", baseUrl+username+"/1/175/75");
 
-    private void requestWritePermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE);
-    }
-
-    private void startCamera() {
-        // create file to store the image
-        Log.d("Debug", "Call start camera, check storage permission");
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            // permission not granted, request for permission
-            requestWritePermission();
-        }
-        createImageFile();
-        if (!imageFile.exists()) {
-            return;
-        }
-        // start camera
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
-        startActivityForResult(intent, REQUEST_CAMERA);
-    }
-
-    // create image file
-    private void createImageFile() {
-        filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + System.currentTimeMillis() + ".jpg";
-        imageFile = new File(filePath);
-        try {
-            imageFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(mContext, "Unable to create image file.", Toast.LENGTH_SHORT).show();
+        Response response = httpClient.newCall(request).execute();
+        JSONObject object = new JSONObject(response.body().string());
+        if (object.getBoolean("status")) {
+            return object.getInt("data");
+        } else {
+            return 0;
         }
     }
 
-    // cut the image using system library
-    private void cropImage(Uri uri) {
-        Intent intent = new Intent("com.android.camera.action.CROP");
-        intent.setDataAndType(uri, IMAGE_UNSPECIFIED);
-        intent.putExtra("crop", "true");
-        intent.putExtra("aspectX", 1);
-        intent.putExtra("aspectY", 1);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imageFile));
-        startActivityForResult(intent, REQUEST_CROP);
+    // get total cal the user have taken today
+    private int getTotalCal() throws IOException, JSONException {
+        // get format date of today
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String date = format.format(new Date());
+        // get user id
+        SharedPreferences sharedPref = getSharedPreferences("storage", Context.MODE_PRIVATE);
+        int uid = sharedPref.getInt("uid", 0);
+
+        Request request = new Request.Builder().url(baseUrl+"getRecords/" + date + "/" + uid).build();
+
+        Response response = httpClient.newCall(request).execute();
+        String result = response.body().string();
+        Log.d("Debug", result);
+        JSONObject object = new JSONObject(result);
+        if (object.getBoolean("status")) {
+            int totalCal = 0;
+            Gson gson = new Gson();
+            Records records = gson.fromJson(result, Records.class);
+            recordData.clear();
+            // title of each field
+            HashMap<String, String> title = new HashMap<>();
+            title.put("name", "name");
+            title.put("protein", "protein");
+            title.put("fat", "fat");
+            title.put("carbo", "carbo");
+            title.put("fiber", "fiber");
+            title.put("energy", "energy");
+            title.put("quan", "quan");
+            recordData.add(title);
+            // put data into list array for listView to display
+            for (Record record : records.data) {
+                // record data
+                HashMap<String, String> map = new HashMap<>();
+                map.put("name", record.name);
+                map.put("protein", record.protein+"");
+                map.put("fat", record.fat+"");
+                map.put("carbo", record.carbohydrates+"");
+                map.put("fiber", record.dietary_fiber+"");
+                map.put("energy", record.energy+"");
+                map.put("quan", record.quantity+"");
+                recordData.add(map);
+                totalCal += record.energy * record.quantity;
+            }
+
+            return totalCal;
+        }
+
+
+        return 0;
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-        switch (requestCode) {
-            case REQUEST_CAMERA:
-                cropImage(Uri.fromFile(imageFile));
-                break;
-            case REQUEST_CROP:
-                //changeFragment(photoFragment);
-                Intent broadcast = new Intent("com.getImage");
-                broadcast.putExtra("image_path", filePath);
-                LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(broadcast);
-                Log.d("Debug", "send broadcast");
-                break;
+    // use asynctask to do http request
+    private class MyRequestRegister extends AsyncTask<String, String, String> {
+
+        public MyRequestRegister() {
+
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            // register user, use a random UUID as the username
+            String str = UUID.randomUUID().toString();
+            String username = str.substring(0, 8) + str.substring(9, 13) + str.substring(14, 18) + str.substring(19, 23) + str.substring(24);
+            try {
+                int uid = register(username);
+                if (uid != 0) {
+                    // store uid
+                    SharedPreferences sharedPref = getSharedPreferences("storage", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putInt("uid", uid);
+                    editor.commit();
+                } else {
+                    makeToast("Register fail");
+                }
+                return uid+"";
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+    }
+
+    // use asynctask to do http request
+    private class MyRequestGetRecord extends AsyncTask<String, String, String> {
+
+        public MyRequestGetRecord() {
+
+        }
+
+
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                int total = getTotalCal();
+                if (total != 0) {
+                    return total+"";
+                } else {
+                    makeToast("No records found");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if (s != null) {
+                cal.setText(s);
+                // refresh listView
+                adapter.notifyDataSetChanged();
+            }
         }
     }
 
+    // make toast
+    private void makeToast(String message) {
+        Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+    }
 
 
 }
