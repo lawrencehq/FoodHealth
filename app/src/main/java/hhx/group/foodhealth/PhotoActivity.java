@@ -211,7 +211,7 @@ public class PhotoActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        if (resultCode == Activity.RESULT_CANCELED){
+        if (resultCode == Activity.RESULT_CANCELED) {
             intent = new Intent(PhotoActivity.this, MainActivity.class);
             startActivity(intent);
             return;
@@ -224,8 +224,6 @@ public class PhotoActivity extends AppCompatActivity {
                 imageView.setImageBitmap(getImage());
                 doAnalysis();
                 break;
-
-
         }
     }
 
@@ -328,14 +326,6 @@ public class PhotoActivity extends AppCompatActivity {
             super.onPostExecute(s);
 
             Gson gson = new Gson();
-            /*
-            if (s == null) {
-                Intent intent = new Intent(PhotoActivity.this, MainActivity.class);
-                startActivity(intent);
-            } else {
-
-            }*/
-
             MyAnalyzeResult result = gson.fromJson(s, MyAnalyzeResult.class);
             List<Tag> tags = result.tags;
             boolean findFood = false;
