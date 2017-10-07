@@ -42,6 +42,7 @@ import java.util.List;
 
 /**
  * Created by Enthalqy Huang on 2017/10/1.
+ * Modified by Xiaoting Huang on 2017/10/05.
  * PhotoActivity, capture food image using camera and upload the image to Microsoft cognitive
  * service to recognize the food
  */
