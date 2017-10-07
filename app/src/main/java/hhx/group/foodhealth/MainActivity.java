@@ -68,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int last_system_count;
     String lastRecord;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    final double STEP_LENGTH = 0.75;
+    final int M_PER_KM = 1000;
+    final int CALORIES_BURN = 50;
 
     private SharedPreferences mPref;
 
@@ -83,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Log.d("Debug", "refresh home");
                     makeToast("refresh the home page");
                     display();
+                    mEnergyCons.setText(String.format( "%.2f", String.valueOf(today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN)));
                     return true;
                 case R.id.navigation_camera:
                     Log.d("Debug", "click camera");
@@ -142,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         initTodayData();
 
-        mEnergyCons.setText(String.valueOf(today_count));
+        mEnergyCons.setText(String.format( "%.2f", today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
 
 
 
