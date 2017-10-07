@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Log.d("Debug", "refresh home");
                     makeToast("refresh the home page");
                     display();
-                    mEnergyCons.setText(String.format( "%.2f", String.valueOf(today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN)));
+                    mEnergyCons.setText(String.format( "%.2f", today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
                     return true;
                 case R.id.navigation_camera:
                     Log.d("Debug", "click camera");

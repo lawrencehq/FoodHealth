@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -17,21 +17,23 @@
             android:name=".MainActivity"
             android:label="Food Health"
             android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".PhotoActivity"
+            android:label="Photo Analysis"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".FoodDetail"
+            android:label="Food Detail"
+            android:screenOrientation="portrait" />
+        <activity android:name=".SplashScreen"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".PhotoActivity"
-            android:label="Photo Analysis"
-            android:screenOrientation="portrait"></activity>
-        <activity
-            android:name=".FoodDetail"
-            android:label="Food Detail"
-            android:screenOrientation="portrait"></activity>
-
     </application>
 
 </manifest>
