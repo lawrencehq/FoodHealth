@@ -43,6 +43,7 @@ import okhttp3.Response;
 
 /**
  * Created by Enthalqy Huang on 2017/10/1.
+ * Modified by Xiaoting Huang on 2017/10/07. 
  * MainActivity, display the records and total cal the user have taken today
  */
 
