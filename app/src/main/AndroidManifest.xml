@@ -9,10 +9,11 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity
             android:name=".MainActivity"
             android:label="Food Health"
@@ -24,7 +25,7 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".FoodDetail"
-            android:label="Food Detail"
+            android:label=""
             android:screenOrientation="portrait" />
         <activity android:name=".SplashScreen"
             android:screenOrientation="portrait" >
@@ -34,6 +35,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".FirstStartActivity"
+            android:screenOrientation="portrait"/>
+
     </application>
 
 </manifest>

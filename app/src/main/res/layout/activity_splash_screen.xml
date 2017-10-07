@@ -4,8 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="hhx.group.foodhealth.SplashScreen"
-    android:background="@drawable/background">
+    tools:context="hhx.group.foodhealth.SplashScreen">
 
+
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:scaleType="centerCrop"
+        android:adjustViewBounds="true"
+        android:src="@drawable/splash"/>
 
 </FrameLayout>

@@ -18,6 +18,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -109,8 +110,10 @@ public class PhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_photo);
 
         mContext = this;
-
-        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
 
         // initial views
         mTextMessage = (TextView) findViewById(R.id.photo_text);
@@ -151,7 +154,7 @@ public class PhotoActivity extends AppCompatActivity {
             // permission not granted, request for permission
             Log.d("Debug", "Permission nor granted, request for permission");
             requestCameraPermission();
-            startCamera();
+            //startCamera();
         } else {
             Log.d("Debug", "Permission already granted");
             startCamera();
@@ -167,6 +170,20 @@ public class PhotoActivity extends AppCompatActivity {
     private void requestWritePermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE);
     }
+
+    @Override
+    public void onRequestPermissionsResult (int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CAMERA){
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                requestWritePermission();
+            }
+        } else if (requestCode == REQUEST_WRITE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                startCamera();
+            }
+        }
+    }
+
 
     private void startCamera() {
         // create file to store the image
@@ -220,7 +237,11 @@ public class PhotoActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_CAMERA:
                 cropImage(Uri.fromFile(imageFile));
+
+                //imageView.setImageBitmap(getImage());
+                //doAnalysis();
                 break;
+
             case REQUEST_CROP:
                 imageView.setImageBitmap(getImage());
                 doAnalysis();

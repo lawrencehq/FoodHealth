@@ -1,6 +1,5 @@
 package hhx.group.foodhealth;
 
-import android.app.ActionBar;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +9,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,7 +19,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -35,7 +33,6 @@ import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.nostra13.universalimageloader.utils.L;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -55,6 +52,7 @@ import java.util.Map;
 
 public class FoodDetail extends AppCompatActivity {
 
+    // UI components
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
 
@@ -88,9 +86,9 @@ public class FoodDetail extends AppCompatActivity {
     private List<String> mExpandableListTitle = new ArrayList<>();
 
     final Context context = this;
-    ImageLoader imageLoader;
+    private ImageLoader imageLoader;
 
-    SharedPreferences mPrefs;
+    private SharedPreferences mPrefs;
     int uid;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
@@ -125,7 +123,7 @@ public class FoodDetail extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       //requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         setContentView(R.layout.activity_food_detail);
 
         mContext = this.context;
@@ -156,10 +154,10 @@ public class FoodDetail extends AppCompatActivity {
 
         uid = mPrefs.getInt("uid", 0);
 
-        //String selectedFood = mPrefs.getString("foodname", null);
-
+        // get category data
         new GetCategory().execute("http://52.255.60.10/index.php/category");
 
+        // set up navigation drawer
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
@@ -199,6 +197,7 @@ public class FoodDetail extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+                // check for valid input
                 if (!mInput.getText().toString().equals("")){
                     final Dialog dialog = new Dialog(context);
                     dialog.setContentView(R.layout.dialog_confirm);
@@ -226,7 +225,7 @@ public class FoodDetail extends AppCompatActivity {
                             mProgressBar.setVisibility(View.VISIBLE);
                             String foodid = selectedItem.getId();
                             String quantity = mInput.getText().toString();
-
+                            // add record
                             new AddRecord().execute("http://52.255.60.10/index.php/addRecord/" + uid + "/" + foodid + "/" + quantity);
 
                         }
@@ -266,21 +265,14 @@ public class FoodDetail extends AppCompatActivity {
 
     private void addDrawerItems() {
         mExpandableListAdapter = new CustomExpandableListAdapter(this, mExpandableListTitle, mExpandableListData);
-        mExpandableListView.setAdapter(mExpandableListAdapter);/*
-        mExpandableListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
-            @Override
-            public void onGroupExpand(int groupPosition) {
-                getSupportActionBar().setTitle(mExpandableListTitle.get(groupPosition).toString());
-            }
-        });*/
+        mExpandableListView.setAdapter(mExpandableListAdapter);
 
+        // load food detail when selected
         mExpandableListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v,
                                         int groupPosition, int childPosition, long id) {
                 selectedItem = mExpandableListData.get(mExpandableListTitle.get(groupPosition)).get(childPosition);
-
-                //getSupportActionBar().setTitle(selectedItem.getName());
 
                 imageLoader.displayImage("http://52.255.60.10/image/" + selectedItem.getImage(), mFoodImage);
 
@@ -345,6 +337,7 @@ public class FoodDetail extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // asyntask to get category data
     private class GetCategory extends AsyncTask<String,String, Void>{
 
         @Override
@@ -437,7 +430,7 @@ public class FoodDetail extends AppCompatActivity {
 
     }
 
-
+    // asyntask to get food data
     private class GetFood extends AsyncTask<String, String, Void>{
 
         @Override
@@ -547,6 +540,7 @@ public class FoodDetail extends AppCompatActivity {
             addDrawerItems();
             setupDrawer();
 
+            // check if navigated from camera activity
             String selectedFood = mPrefs.getString("foodname", null);
 
             if (selectedFood != null) {
@@ -555,12 +549,10 @@ public class FoodDetail extends AppCompatActivity {
                 editor.putString("foodname", null);
                 editor.commit();
             } else if (mExpandableListData.get(mExpandableListTitle.get(0)) != null){
-
+                // set the first item as default
                 selectedItem = mExpandableListData.get(mExpandableListTitle.get(0)).get(0);
 
             }
-
-            //getSupportActionBar().setTitle(selectedItem.getName());
 
             imageLoader.displayImage("http://52.255.60.10/image/" + selectedItem.getImage(), mFoodImage);
 
@@ -573,12 +565,12 @@ public class FoodDetail extends AppCompatActivity {
             mDietaryFiber.setText(selectedItem.getDietary_fiber() + "g");
 
             mDrawerLayout.closeDrawer(GravityCompat.START);
-
             mProgressBar.setVisibility(View.GONE);
+
         }
 
     }
-
+    // asyntask to add record
     private class AddRecord extends AsyncTask<String, String, Boolean>{
 
         @Override

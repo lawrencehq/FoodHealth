@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -60,20 +61,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SimpleAdapter adapter;
     private List<HashMap<String, String>> recordData = new ArrayList<>();
 
+    // UI components
     private TextView mEnergyCons;
 
+    // Step detection
     SensorManager sensorManager;
-    private static String CURRENT_DATE;
-    private int today_count;
-    private int current_system_count;
-    private int last_system_count;
-    String lastRecord;
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private String CURRENT_DATE;
+    private float current_system_count;
+    private float last_system_count;
+    private String lastRecord;
+
+    // Convert step to calories
     final double STEP_LENGTH = 0.75;
     final int M_PER_KM = 1000;
     final int CALORIES_BURN = 50;
 
     private SharedPreferences mPref;
+
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -87,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     Log.d("Debug", "refresh home");
                     makeToast("refresh the home page");
                     display();
-                    mEnergyCons.setText(String.format( "%.2f", today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
+                    mEnergyCons.setText(String.format( "%.2f", mPref.getFloat("step_today", 0) * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
                     return true;
                 case R.id.navigation_camera:
                     Log.d("Debug", "click camera");
@@ -113,7 +118,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mContext = this;
         mPref = getSharedPreferences("storage", Context.MODE_PRIVATE);
 
-        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
@@ -132,6 +140,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 new String[] {"name", "quantity", "protein", "fat", "carbo", "fiber", "energy"},
                 new int[] {R.id.text1, R.id.text2, R.id.text3, R.id.text4, R.id.text5, R.id.text6, R.id.text7});
         listView.setAdapter(adapter);
+        // display user info
+        display();
+
+        // initiate step detection data
+        initTodayData();
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
@@ -141,16 +154,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Toast.makeText(this, "Sensor not found! ", Toast.LENGTH_SHORT).show();
         }
 
-        // display user info
-        display();
-
-
-        initTodayData();
-
-        mEnergyCons.setText(String.format( "%.2f", today_count * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
-
-
-
 
 
     }
@@ -159,12 +162,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         Date today = Calendar.getInstance().getTime();
         CURRENT_DATE = sdf.format(today);
-
         lastRecord = mPref.getString("record_date", "");
+
+        // display data if is available
         if (lastRecord.equals(CURRENT_DATE)){
-            today_count = mPref.getInt("step_today", 0);
+            mEnergyCons.setText(String.format( "%.2f", mPref.getFloat("step_today", 0) * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
         } else {
-            today_count = 0;
+            mEnergyCons.setText(String.format( "%.2f", 0.0));
         }
 
 
@@ -182,13 +186,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // if uid exists, refresh the view, else create user
         if (uid == 0) {
             new MyRequestRegister().execute();
-            SharedPreferences.Editor editor = mPref.edit();
-            editor.putInt("step_history", current_system_count);
-            editor.putInt("step_today", 0);
-            Date date = Calendar.getInstance().getTime();
-            editor.putString("record_date", sdf.format(date));
-            editor.commit();
-
         } else {
             new MyRequestGetRecord().execute();
         }
@@ -211,8 +208,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     // get total cal the user have taken today
     private int getTotalCal() throws IOException, JSONException {
         // get format date of today
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        String date = format.format(new Date());
+        String date = sdf.format(new Date());
         // get user id
         int uid = mPref.getInt("uid", 0);
 
@@ -259,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return 0;
     }
 
+    // resume sensor manager
     @Override
     protected void onResume() {
         super.onResume();
@@ -270,41 +267,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
     }
+
+    // pause sensorManager
     @Override
     protected void onPause() {
         super.onPause();
-        sensorManager.unregisterListener(this);
+        //sensorManager.unregisterListener(this);
+
     }
 
+    // update step data
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        current_system_count = (int) event.values[0];
-        last_system_count = mPref.getInt("step_history", 0);
-        int step;
-        if (lastRecord.equals(CURRENT_DATE)) {
+        current_system_count = event.values[0];
+        last_system_count = mPref.getFloat("step_history", 0);
+        lastRecord = mPref.getString("record_date", "");
 
+        if (lastRecord.equals(CURRENT_DATE)) {
+            float step;
+            // if the phone has been turned off, add to today's data
             if (current_system_count < last_system_count){
-                step = current_system_count + last_system_count;
+                step = mPref.getFloat("step_today", 0) + last_system_count;
             } else {
-                step = current_system_count - last_system_count + today_count;
+                step = current_system_count - last_system_count + mPref.getFloat("step_today", 0);
             }
             SharedPreferences.Editor editor = mPref.edit();
-            editor.putInt("step_history", current_system_count);
-            editor.putInt("step_today", step);
+            editor.putFloat("step_history", current_system_count);
+            editor.putFloat("step_today", step);
             editor.commit();
+            mEnergyCons.setText(String.format( "%.2f", mPref.getFloat("step_today", 0) * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
         } else {
-            step = 0;
             SharedPreferences.Editor editor = mPref.edit();
-            editor.putInt("step_history", current_system_count);
-            editor.putInt("step_today", step);
+            editor.putFloat("step_history", current_system_count);
+            editor.putFloat("step_today", 0);
             editor.putString("record_date", CURRENT_DATE);
             editor.commit();
-
+            mEnergyCons.setText(String.format( "%.2f", mPref.getFloat("step_today", 0) * STEP_LENGTH / M_PER_KM * CALORIES_BURN));
         }
-
-
-
 
     }
 

@@ -1,5 +1,10 @@
 package hhx.group.foodhealth;
 
+/**
+ * Created by @msahakyan.
+ * Modified by Xiaoting Huang on 2017-10-04
+ **/
+
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;

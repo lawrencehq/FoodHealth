@@ -2,6 +2,7 @@ package hhx.group.foodhealth;
 
 /**
  * Created by Xiaoting Huang on 2017-10-3.
+ * Store Food data
  */
 
 public class Food {

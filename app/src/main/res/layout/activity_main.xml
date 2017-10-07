@@ -27,7 +27,12 @@
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="match_parent"
-                    android:layout_height="150dp" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginTop="50dp"
+                    android:scaleType="centerInside"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/main_logo"/>
 
                 <TableLayout
                     android:layout_width="match_parent"
@@ -141,7 +146,7 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="50dp"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="10dp">
