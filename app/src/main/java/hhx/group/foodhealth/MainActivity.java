@@ -390,6 +390,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 // refresh listView
                 adapter.notifyDataSetChanged();
             } else {
+                cal.setText("0");
                 makeToast("No records found");
             }
         }
