@@ -1,12 +1,15 @@
 package hhx.group.foodhealth;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -76,11 +79,11 @@ public class PhotoActivity extends AppCompatActivity {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            Intent intent = new Intent();
             switch (item.getItemId()) {
                 case R.id.navigation_home:
                     Log.d("Debug", "click home");
                     // change to MainActivity
-                    Intent intent = new Intent();
                     intent.setClass(PhotoActivity.this, MainActivity.class);
                     startActivity(intent);
                     return true;
@@ -90,7 +93,8 @@ public class PhotoActivity extends AppCompatActivity {
                     showCamera();
                     return true;
                 case R.id.navigation_explore:
-                    mTextMessage.setText(R.string.title_notifications);
+                    intent.setClass(PhotoActivity.this, FoodDetail.class);
+                    startActivity(intent);
                     return true;
             }
             return false;
@@ -104,6 +108,9 @@ public class PhotoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_photo);
 
         mContext = this;
+
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+
         // initial views
         mTextMessage = (TextView) findViewById(R.id.photo_text);
         imageView = (ImageView) findViewById(R.id.photo_activity);
@@ -112,6 +119,8 @@ public class PhotoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 makeToast("to detail page");
+                Intent intent = new Intent(PhotoActivity.this, FoodDetail.class);
+                startActivity(intent);
             }
         });
         buttonNo = (Button) findViewById(R.id.button_no);
@@ -129,6 +138,10 @@ public class PhotoActivity extends AppCompatActivity {
         }
         // set item camera to be selected
         navigation.setSelectedItemId(R.id.navigation_camera);
+    }
+
+    @Override
+    public void onBackPressed() {
     }
 
     private void showCamera() {
@@ -198,6 +211,11 @@ public class PhotoActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
+        if (resultCode == Activity.RESULT_CANCELED){
+            intent = new Intent(PhotoActivity.this, MainActivity.class);
+            startActivity(intent);
+            return;
+        }
         switch (requestCode) {
             case REQUEST_CAMERA:
                 cropImage(Uri.fromFile(imageFile));
@@ -206,6 +224,8 @@ public class PhotoActivity extends AppCompatActivity {
                 imageView.setImageBitmap(getImage());
                 doAnalysis();
                 break;
+
+
         }
     }
 
@@ -265,13 +285,25 @@ public class PhotoActivity extends AppCompatActivity {
         // get image stream
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         Bitmap bitmap = getImage();
+        if (output == null){
+            return null;
+        } else {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+            ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+
+            // request cognitive API
+            AnalyzeResult result = client.analyzeImage(input, features);
+
+            return gson.toJson(result);
+        }
+         /*
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
         ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
 
         // request cognitive API
         AnalyzeResult result = client.analyzeImage(input, features);
 
-        return gson.toJson(result);
+        return gson.toJson(result);*/
     }
 
     // use asyncTask to do http request, avoid blocking the UI thread
@@ -296,6 +328,14 @@ public class PhotoActivity extends AppCompatActivity {
             super.onPostExecute(s);
 
             Gson gson = new Gson();
+            /*
+            if (s == null) {
+                Intent intent = new Intent(PhotoActivity.this, MainActivity.class);
+                startActivity(intent);
+            } else {
+
+            }*/
+
             MyAnalyzeResult result = gson.fromJson(s, MyAnalyzeResult.class);
             List<Tag> tags = result.tags;
             boolean findFood = false;

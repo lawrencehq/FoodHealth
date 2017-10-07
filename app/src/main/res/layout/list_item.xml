@@ -8,51 +8,57 @@
         android:id="@+id/text1"
         android:layout_width="70dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="7dp"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text2"
-        android:layout_width="52dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text3"
-        android:layout_width="40dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text4"
-        android:layout_width="43dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text5"
-        android:layout_width="43dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text6"
-        android:layout_width="46dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
     <TextView
         android:id="@+id/text7"
-        android:layout_width="43dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
+        android:maxLines="1"
         android:textSize="15sp"
         android:textAlignment="center"
         android:textColor="@color/grey"/>
 
 </LinearLayout>
+
+
