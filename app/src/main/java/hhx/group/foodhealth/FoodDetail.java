@@ -424,6 +424,7 @@ public class FoodDetail extends AppCompatActivity {
 
             } else {
                 Toast.makeText(mContext, "Please check your internet connection! ", Toast.LENGTH_SHORT).show();
+                mProgressBar.setVisibility(View.GONE);
             }
 
         }
